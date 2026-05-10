@@ -30,10 +30,6 @@ CSV_PATH = os.path.join(SCRIPT_DIR, "..", "Milestone_1", "frontend_uiux_bug_data
 
 df = pd.read_csv(CSV_PATH)
 
-if 'bug_id' in df.columns:
-    df.set_index('bug_id', inplace=True)
-    print(" -> Set 'bug_id' as the dataset identifier (index).")
-
 print("\nStep 2: Preparing data for Statistical Analysis...")
 target_cols = ['severity', 'priority']
 
@@ -61,7 +57,22 @@ df_mi_sev = (pd.DataFrame({'Feature': feature_cols, 'Importance': mi_sev})
 df_mi_pri = (pd.DataFrame({'Feature': feature_cols, 'Importance': mi_pri})
                .sort_values(by='Importance', ascending=False))
 
-print("\nStep 4: Exporting selected_features.json...")
+print("\nStep 3b: Calculating Pearson Correlation Analysis...")
+# Calculate Pearson correlation between features and targets
+corr_sev = np.array([np.corrcoef(X[feature_cols[i]], y_sev)[0, 1] for i in range(len(feature_cols))])
+corr_pri = np.array([np.corrcoef(X[feature_cols[i]], y_pri)[0, 1] for i in range(len(feature_cols))])
+
+# Replace NaN values (from constant features) with 0
+corr_sev = np.nan_to_num(corr_sev, nan=0.0)
+corr_pri = np.nan_to_num(corr_pri, nan=0.0)
+
+# Use absolute correlation values for ranking
+df_corr_sev = (pd.DataFrame({'Feature': feature_cols, 'Correlation': np.abs(corr_sev)})
+                 .sort_values(by='Correlation', ascending=False))
+df_corr_pri = (pd.DataFrame({'Feature': feature_cols, 'Correlation': np.abs(corr_pri)})
+                 .sort_values(by='Correlation', ascending=False))
+
+print("\nStep 4: Exporting selected_features.json (Mutual Information)...")
 combined_importance = (
     df_mi_sev.set_index('Feature')['Importance'] +
     df_mi_pri.set_index('Feature')['Importance']
@@ -80,7 +91,28 @@ output_json = {
 json_path = os.path.join(SCRIPT_DIR, "selected_features.json")
 with open(json_path, "w") as f:
     json.dump(output_json, f, indent=4)
-print(" -> JSON file saved successfully.")
+print(" -> selected_features.json saved successfully.")
+
+print("\nStep 4b: Exporting selected_features_correlation.json (Pearson Correlation)...")
+combined_corr = (
+    df_corr_sev.set_index('Feature')['Correlation'] +
+    df_corr_pri.set_index('Feature')['Correlation']
+).sort_values(ascending=False)
+
+selected_features_corr = combined_corr.head(10).index.tolist()
+
+output_json_corr = {
+    "project":           "DS4SE - Bug Severity and Priority Prediction",
+    "targets":           target_cols,
+    "selected_features": selected_features_corr,
+    "severity_correlation_scores": df_corr_sev.set_index('Feature')['Correlation'].to_dict(),
+    "priority_correlation_scores": df_corr_pri.set_index('Feature')['Correlation'].to_dict(),
+}
+
+json_path_corr = os.path.join(SCRIPT_DIR, "selected_features_correlation.json")
+with open(json_path_corr, "w") as f:
+    json.dump(output_json_corr, f, indent=4)
+print(" -> selected_features_correlation.json saved successfully.")
 
 print("\nStep 5: Generating Visualizations...")
 
@@ -167,7 +199,29 @@ plt.ylabel('Features')
 plt.tight_layout()
 save('07_priority_feature_importance.png')
 
-print("\n -> 7 Graphs saved successfully in 'project_visualizations/' folder.")
+plt.figure(figsize=(10, 6))
+df_sev_corr = df_corr_sev[df_corr_sev['Correlation'] > 0].copy()
+sns.barplot(data=df_sev_corr, x='Correlation', y='Feature',
+            hue='Feature', palette='coolwarm', legend=False)
+plt.title('Feature Importance for SEVERITY (Pearson Correlation)',
+          fontsize=14, fontweight='bold')
+plt.xlabel('Absolute Correlation')
+plt.ylabel('Features')
+plt.tight_layout()
+save('08_severity_correlation.png')
+
+plt.figure(figsize=(10, 6))
+df_pri_corr = df_corr_pri[df_corr_pri['Correlation'] > 0].copy()
+sns.barplot(data=df_pri_corr, x='Correlation', y='Feature',
+            hue='Feature', palette='twilight', legend=False)
+plt.title('Feature Importance for PRIORITY (Pearson Correlation)',
+          fontsize=14, fontweight='bold')
+plt.xlabel('Absolute Correlation')
+plt.ylabel('Features')
+plt.tight_layout()
+save('09_priority_correlation.png')
+
+print("\n -> 9 Graphs saved successfully in 'project_visualizations/' folder.")
 print("\n" + "="*60)
 print("Process Complete! You are ready for the ML Modeling phase.")
 print("="*60)
