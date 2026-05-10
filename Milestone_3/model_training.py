@@ -21,11 +21,13 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.model_selection import train_test_split, StratifiedKFold, cross_val_score
 from sklearn.metrics import (accuracy_score, f1_score,
                              classification_report, confusion_matrix)
-from sklearn.linear_model  import LogisticRegression
+from sklearn.linear_model  import LogisticRegression, PassiveAggressiveClassifier
 from sklearn.tree          import DecisionTreeClassifier
 from sklearn.ensemble      import RandomForestClassifier
 from sklearn.naive_bayes   import GaussianNB
+from sklearn.svm           import SVC
 from sklearn.feature_selection import mutual_info_classif
+from xgboost import XGBClassifier
 
 SCRIPT_DIR   = os.path.dirname(os.path.abspath(__file__))
 DATASET_PATH = os.path.join(SCRIPT_DIR, "..", "Milestone_1", "frontend_uiux_bug_dataset_cleaned.csv")
@@ -138,6 +140,23 @@ MODELS = {
                                n_jobs=-1, random_state=RANDOM_STATE),
         RandomForestClassifier(n_estimators=100, max_depth=20, min_samples_leaf=10,
                                n_jobs=-1, random_state=RANDOM_STATE),
+        False
+    ),
+    "Passive Aggressive": (
+        PassiveAggressiveClassifier(max_iter=1000, random_state=RANDOM_STATE, n_jobs=-1),
+        PassiveAggressiveClassifier(max_iter=1000, random_state=RANDOM_STATE, n_jobs=-1),
+        True
+    ),
+    "SVM": (
+        SVC(kernel='rbf', C=1.0, gamma='scale', random_state=RANDOM_STATE),
+        SVC(kernel='rbf', C=1.0, gamma='scale', random_state=RANDOM_STATE),
+        True
+    ),
+    "XGBoost": (
+        XGBClassifier(n_estimators=100, max_depth=6, learning_rate=0.1, 
+                      random_state=RANDOM_STATE, n_jobs=-1, verbosity=0),
+        XGBClassifier(n_estimators=100, max_depth=6, learning_rate=0.1,
+                      random_state=RANDOM_STATE, n_jobs=-1, verbosity=0),
         False
     ),
 }
