@@ -1,0 +1,49 @@
+{
+    "project": "DS4SE - Bug Severity and Priority Prediction",
+    "targets": [
+        "severity",
+        "priority"
+    ],
+    "selected_features": [
+        "user_impact_score",
+        "time_to_fix_sec",
+        "time_to_detect_sec",
+        "module",
+        "bug_type",
+        "device_type",
+        "tags",
+        "browser",
+        "reported_by",
+        "resolved"
+    ],
+    "severity_correlation_scores": {
+        "user_impact_score": 0.6982833844581737,
+        "time_to_fix_sec": 0.6756966447084117,
+        "time_to_detect_sec": 0.6175655366777196,
+        "module": 0.22659258655799008,
+        "bug_type": 0.04577039543267169,
+        "device_type": 0.01239716481880827,
+        "tags": 0.00224078092970632,
+        "reported_by": 0.001622943791375693,
+        "browser": 0.0015946811842821897,
+        "resolved": 0.0015283673630608467,
+        "os": 0.0012289247635753904,
+        "screenshot_available": 0.0006318490097553586,
+        "app_name": 0.0003285951523146504
+    },
+    "priority_correlation_scores": {
+        "user_impact_score": 0.8048842914332962,
+        "time_to_fix_sec": 0.7528756457963587,
+        "time_to_detect_sec": 0.6863928293260199,
+        "module": 0.3201360589176253,
+        "device_type": 0.018450448405251885,
+        "bug_type": 0.015994903248126743,
+        "tags": 0.001154352667654939,
+        "browser": 0.0006889048944134976,
+        "screenshot_available": 0.000515893403511025,
+        "reported_by": 0.00043373681109801665,
+        "os": 0.00043200585841836813,
+        "resolved": 0.00031342719947422454,
+        "app_name": 0.00011926618250894132
+    }
+}
