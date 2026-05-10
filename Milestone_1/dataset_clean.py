@@ -202,7 +202,7 @@ if "tags" in df.columns:
 
 print("Step 11: Dropping irrelevant columns:")
 
-cols_to_drop  = ["page_url"]
+cols_to_drop  = ["page_url", "bug_id"]
 cols_actually_dropped = [c for c in cols_to_drop if c in df.columns]
 
 df.drop(columns=cols_actually_dropped, inplace=True)
