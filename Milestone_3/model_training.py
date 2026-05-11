@@ -1,9 +1,3 @@
-# DS4SE Project – Milestone 3: Model Training & Evaluation
-# Group Leader: Hira Zahoor (22K-4823)
-# Members:   Hafsa Salman (22K-5161)
-#            Jaysha Iqbal (22K-5178)
-#            Amna Mansoor (22K-5159)
-
 import os
 import json
 import joblib
@@ -19,18 +13,17 @@ import seaborn as sns
 
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.model_selection import train_test_split, StratifiedKFold, cross_val_score
-from sklearn.metrics import (accuracy_score, f1_score,
-                             classification_report, confusion_matrix)
+from sklearn.metrics import (accuracy_score, f1_score, classification_report, confusion_matrix)
 from sklearn.linear_model  import LogisticRegression, PassiveAggressiveClassifier
 from sklearn.tree          import DecisionTreeClassifier
 from sklearn.ensemble      import RandomForestClassifier
 from sklearn.naive_bayes   import GaussianNB
 from sklearn.svm           import SVC
-from sklearn.feature_selection import mutual_info_classif
 from xgboost import XGBClassifier
 
 SCRIPT_DIR   = os.path.dirname(os.path.abspath(__file__))
 DATASET_PATH = os.path.join(SCRIPT_DIR, "..", "Milestone_1", "frontend_uiux_bug_dataset_cleaned.csv")
+FEATURES_PATH = os.path.join(SCRIPT_DIR, "..", "Milestone_2", "selected_features.json")
 OUTPUT_DIR   = os.path.join(SCRIPT_DIR, "model_results")
 RANDOM_STATE = 42
 TEST_SIZE    = 0.20
@@ -51,7 +44,18 @@ print(f"  Shape : {df.shape[0]:,} rows × {df.shape[1]} columns")
 print(f"  Severity distribution:\n{df['severity'].value_counts().to_string()}")
 print(f"\n  Priority distribution:\n{df['priority'].value_counts().to_string()}")
 
-print("\nStep 2: Feature Engineering…")
+print("\nStep 2: Loading selected features from Milestone 2…")
+
+# Load pre-computed features and MI scores from Milestone_2
+with open(FEATURES_PATH, "r") as f:
+    features_data = json.load(f)
+
+SELECTED_FEATURES = features_data["selected_features"]
+sev_importance = features_data["severity_importance_scores"]
+pri_importance = features_data["priority_importance_scores"]
+
+print(f"  Loaded {len(SELECTED_FEATURES)} selected features from Milestone 2")
+print(f"  Features: {SELECTED_FEATURES}")
 
 # Drop text/NLP and identifier columns – they cannot be used directly
 nlp_drop = ["bug_id", "steps_to_reproduce", "expected_behavior",
@@ -79,26 +83,32 @@ pri_map = {"P3": 0, "P2": 1, "P1": 2}
 df["sev_enc"] = df["severity"].map(sev_map)
 df["pri_enc"] = df["priority"].map(pri_map)
 
-FEATURE_COLS = [c for c in df.columns
-                if c not in ["severity", "priority", "sev_enc", "pri_enc"]]
-print(f"  Features used : {FEATURE_COLS}")
+# Use only the selected features from Milestone 2
+FEATURE_COLS = [f for f in SELECTED_FEATURES if f in df.columns]
+print(f"  Using {len(FEATURE_COLS)} selected features for training")
+print(f"  Features: {FEATURE_COLS}")
+
+# Create MI dataframes for visualization from loaded data
+mi_s_list = [sev_importance.get(f, 0) for f in FEATURE_COLS]
+mi_p_list = [pri_importance.get(f, 0) for f in FEATURE_COLS]
+
+df_mi_s = pd.DataFrame({"Feature": FEATURE_COLS, "MI_Severity": mi_s_list}).sort_values("MI_Severity", ascending=False)
+df_mi_p = pd.DataFrame({"Feature": FEATURE_COLS, "MI_Priority": mi_p_list}).sort_values("MI_Priority", ascending=False)
+
+print("\n  Top features for Severity (from Milestone 2):")
+print(df_mi_s.to_string(index=False))
+print("\n  Top features for Priority (from Milestone 2):")
+print(df_mi_p.to_string(index=False))
 
 X  = df[FEATURE_COLS].values
 y_s = df["sev_enc"].values
 y_p = df["pri_enc"].values
 
 # ──────────────────────────────────────────────────────────────────
-# STEP 3 – Mutual Information (feature ranking)
+# STEP 3 – Feature Selection (loaded from Milestone 2)
 # ──────────────────────────────────────────────────────────────────
-print("\nStep 3: Computing Mutual Information scores…")
-mi_s = mutual_info_classif(X, y_s, random_state=RANDOM_STATE)
-mi_p = mutual_info_classif(X, y_p, random_state=RANDOM_STATE)
-df_mi_s = pd.DataFrame({"Feature": FEATURE_COLS, "MI_Severity": mi_s}).sort_values("MI_Severity", ascending=False)
-df_mi_p = pd.DataFrame({"Feature": FEATURE_COLS, "MI_Priority": mi_p}).sort_values("MI_Priority", ascending=False)
-print("  Top 5 features for Severity :")
-print(df_mi_s.head(5).to_string(index=False))
-print("  Top 5 features for Priority :")
-print(df_mi_p.head(5).to_string(index=False))
+print("\nStep 3: Feature selection completed (loaded from Milestone 2)")
+print(f"  {len(FEATURE_COLS)} features selected for training")
 
 # ──────────────────────────────────────────────────────────────────
 # STEP 4 – Train / Test Split
@@ -164,7 +174,7 @@ MODELS = {
 # ──────────────────────────────────────────────────────────────────
 # STEP 6 – Train & Evaluate
 # ──────────────────────────────────────────────────────────────────
-print("\nStep 5: Training & Evaluating Models…")
+print("\nStep 4: Training & Evaluating Models…")
 print("-"*65)
 
 results = {}
@@ -201,7 +211,7 @@ best_s = max(results, key=lambda k: results[k]["sev"]["acc"])
 best_p = max(results, key=lambda k: results[k]["pri"]["acc"])
 
 print("\n" + "="*65)
-print("Step 6: Detailed Classification Reports…")
+print("Step 5: Detailed Classification Reports…")
 print(f"\n  Best model for SEVERITY : {best_s}")
 print(classification_report(yte_s, results[best_s]["sev"]["pred"],
                              target_names=SEV_LABELS))
@@ -212,7 +222,7 @@ print(classification_report(yte_p, results[best_p]["pri"]["pred"],
 # ──────────────────────────────────────────────────────────────────
 # STEP 8 – Visualizations
 # ──────────────────────────────────────────────────────────────────
-print("\nStep 7: Generating Visualizations…")
+print("\nStep 6: Generating Visualizations…")
 model_names = list(results.keys())
 
 def bar_annotations(ax, bars):
@@ -230,8 +240,6 @@ pri_accs = [results[m]["pri"]["acc"]*100 for m in model_names]
 fig, ax = plt.subplots(figsize=(13, 6))
 b1 = ax.bar(x - w/2, sev_accs, w, label="Severity", color="steelblue")
 b2 = ax.bar(x + w/2, pri_accs, w, label="Priority",  color="coral")
-ax.axhline(70, color="orange",    linestyle="--", lw=1.5, label="70% target")
-ax.axhline(80, color="green",     linestyle="--", lw=1.5, label="80% target")
 bar_annotations(ax, list(b1) + list(b2))
 ax.set_xticks(x); ax.set_xticklabels(model_names, rotation=15, ha="right")
 ax.set_xlabel("Model"); ax.set_ylabel("Accuracy (%)")
@@ -286,7 +294,7 @@ ax.set_title("Random Forest – Feature Importance for Severity",
 plt.tight_layout()
 plt.savefig(f"{OUTPUT_DIR}/05_rf_feature_importance.png", dpi=150); plt.close()
 
-# Plot 6 – Mutual Information (both targets)
+# Plot 6 – Mutual Information (both targets, from Milestone 2)
 fig, axes = plt.subplots(1, 2, figsize=(14, 6))
 for ax, df_mi, col, title, color in [
     (axes[0], df_mi_s.sort_values("MI_Severity"),     "MI_Severity", "Severity", "tomato"),
@@ -295,7 +303,7 @@ for ax, df_mi, col, title, color in [
     ax.barh(df_mi["Feature"], df_mi[col], color=color)
     ax.set_xlabel("Mutual Information")
     ax.set_title(f"MI – {title}", fontweight="bold")
-plt.suptitle("Feature Importance via Mutual Information",
+plt.suptitle("Feature Importance via Mutual Information (from Milestone 2)",
              fontsize=13, fontweight="bold")
 plt.tight_layout()
 plt.savefig(f"{OUTPUT_DIR}/06_mutual_information.png", dpi=150); plt.close()
@@ -354,7 +362,7 @@ print(f"  Saved JSON summary → {json_path}")
 # ──────────────────────────────────────────────────────────────────
 # STEP 10 – Save best models & encoders for predict_bug.py
 # ──────────────────────────────────────────────────────────────────
-print("\nStep 9: Saving best models and encoders for prediction…")
+print("\nStep 8: Saving best models and encoders for prediction…")
 
 joblib.dump(results[best_s]["sev"]["model"], os.path.join(SCRIPT_DIR, "severity_rf_model.joblib"))
 joblib.dump(results[best_p]["pri"]["model"], os.path.join(SCRIPT_DIR, "priority_rf_model.joblib"))
