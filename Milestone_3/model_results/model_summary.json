@@ -1,0 +1,82 @@
+{
+    "project": "DS4SE \u2013 Bug Severity and Priority Prediction",
+    "dataset_size": 500000,
+    "features": [
+        "user_impact_score",
+        "time_to_fix_sec",
+        "bug_type",
+        "time_to_detect_sec",
+        "module",
+        "screenshot_available",
+        "resolved",
+        "reported_by",
+        "device_type",
+        "app_name"
+    ],
+    "results": {
+        "severity": {
+            "Logistic Regression": {
+                "accuracy": 0.7582,
+                "f1_weighted": 0.759
+            },
+            "Naive Bayes": {
+                "accuracy": 0.7577,
+                "f1_weighted": 0.759
+            },
+            "Decision Tree": {
+                "accuracy": 0.8871,
+                "f1_weighted": 0.8872
+            },
+            "Random Forest": {
+                "accuracy": 0.8834,
+                "f1_weighted": 0.8836
+            },
+            "Passive Aggressive": {
+                "accuracy": 0.6189,
+                "f1_weighted": 0.5984
+            },
+            "SVM": {
+                "accuracy": 0.8048,
+                "f1_weighted": 0.8062
+            },
+            "XGBoost": {
+                "accuracy": 0.8865,
+                "f1_weighted": 0.8868
+            }
+        },
+        "priority": {
+            "Logistic Regression": {
+                "accuracy": 0.8231,
+                "f1_weighted": 0.8216
+            },
+            "Naive Bayes": {
+                "accuracy": 0.8068,
+                "f1_weighted": 0.8065
+            },
+            "Decision Tree": {
+                "accuracy": 0.8956,
+                "f1_weighted": 0.8952
+            },
+            "Random Forest": {
+                "accuracy": 0.8943,
+                "f1_weighted": 0.8935
+            },
+            "Passive Aggressive": {
+                "accuracy": 0.5808,
+                "f1_weighted": 0.578
+            },
+            "SVM": {
+                "accuracy": 0.8562,
+                "f1_weighted": 0.8548
+            },
+            "XGBoost": {
+                "accuracy": 0.8963,
+                "f1_weighted": 0.896
+            }
+        }
+    },
+    "best_model": {
+        "severity": "Decision Tree",
+        "priority": "XGBoost"
+    }
+}
